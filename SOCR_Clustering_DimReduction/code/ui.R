@@ -39,8 +39,8 @@ ui <- shinyUI(fluidPage(
                   box(selectInput("inSelect", "Select input", c("Item A", "Item B", "Item C")), width = 3),
                   box(selectInput("inSelect2", "Select input", c("Item A", "Item B", "Item C")), width = 3),
                   conditionalPanel(condition = "input.GMM_plot == '3D'", box(width = 3,selectInput("inSelect3", "Select input", c("Item A", "Item B", "Item C")))),
-                  box(width = 12,plotly::plotlyOutput("Gaussian_clusterchart",width="100%",height = 750)),
-                  box(sliderInput("clustnum_GMM","Number of clusters",2,8,6))
+                  box(sliderInput("clustnum_GMM","Number of clusters",2,8,6)),
+                  box(width = 12,plotly::plotlyOutput("Gaussian_clusterchart",width="100%",height = 750))
                 )),
         tabItem(tabName = "Spectral", h1("Spectral clustering"),
                 fluidRow(
