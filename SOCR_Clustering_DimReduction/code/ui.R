@@ -48,8 +48,8 @@ ui <- shinyUI(fluidPage(
                   box(selectInput("inSelect_Spectral", "Select input", c("Item A", "Item B", "Item C")), width = 3),
                   box(selectInput("inSelect2_Spectral", "Select input", c("Item A", "Item B", "Item C")), width = 3),
                   conditionalPanel(condition = "input.Spectral_plot == '3D'", box(width = 3,selectInput("inSelect3_Spectral", "Select input", c("Item A", "Item B", "Item C")))),
-                  box(width = 12,plotly::plotlyOutput("clusterchart_spectral",width="100%",height = 750)),
-                  box(sliderInput("clustnum_spec","Number of clusters",2,8,6))
+                  box(sliderInput("clustnum_spec","Number of clusters",2,8,6)),
+                  box(width = 12,plotly::plotlyOutput("clusterchart_spectral",width="100%",height = 750))
                 )),
         tabItem(tabName = "cmeans", h1("Fuzzy C-means clustering"),
                 fluidRow(
@@ -57,8 +57,8 @@ ui <- shinyUI(fluidPage(
                   box(selectInput("inSelect_Cmeans", "Select input", c("Item A", "Item B", "Item C")), width = 3),
                   box(selectInput("inSelect2_Cmeans", "Select input", c("Item A", "Item B", "Item C")), width = 3),
                   conditionalPanel(condition = "input.cmeans_plot == '3D'", box(width = 3,selectInput("inSelect3_Cmeans", "Select input", c("Item A", "Item B", "Item C")))),
-                  box(width = 12,plotly::plotlyOutput("clusterchart_cmeans",width="100%",height = 750)),
-                  box(sliderInput("clustnum_cmeans","Number of clusters",2,8,6))
+                  box(sliderInput("clustnum_cmeans","Number of clusters",2,8,6)),
+                  box(width = 12,plotly::plotlyOutput("clusterchart_cmeans",width="100%",height = 750))
                 )),
         tabItem(tabName = "Cluster_Result", h1("Clustered Data Result"),
                 downloadButton('download',"Download the data"),
