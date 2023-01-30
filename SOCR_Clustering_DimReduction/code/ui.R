@@ -65,7 +65,7 @@ ui <- shinyUI(fluidPage(
                 fluidRow(column(5,tableOutput("clustered_data")))),
         tabItem(tabName = "Help", h1("Help"), 
                 h2("This interactive SOCR RShiny app demonstrates 2D and 3D data clustering. It facilitates data import, parameter setting, and dynamic visualization of multiple clustering algorithms including k-means, spectral, Gaussian mixture modeling, etc. The app allows users to upload their own data (CSV format) for just-in-time visualization.",style="font-size:25px;"),h2("The app expects the data to be in CSV file format where the first row includes the names of all data elements (variables or features) and the rows contain the samples or cases. The user may select distinct features to include in the data clustering. One default dataset is provided as an example to illustrate the app functionality and users can select and load another dataset from a local CSV file.",style="font-size:25px;"),
-                p("Developers: Shihang Li (shihangl@umich.edu) Yongxiang Zhao (zyxleo@umich.edu) Simeone Marino (simeonem@umich.edu)."),
+                p("Developers: Shihang Li (shihangl@umich.edu) Yongxiang Zhao (zyxleo@umich.edu) Ding (Eric) Ding (ericding@umich.edu) Simeone Marino (simeonem@umich.edu)."),
                 # p("the SOCR Team (https://www.socr.umich.edu/people/)."),
                 shiny::a(h4("SOCR Team", class = "btn btn-default action-button" , 
                             style = "fontweight:600"), target = "_blank",
