@@ -35,6 +35,13 @@ Team
 
 [SOCR Team](https://www.socr.umich.edu/people/) including **Shihang Li**, Yongxiang Zhao, Ding (Eric) Ding, Simeone Marino, [Ivo D. Dinov](https://umich.edu/~dinov), and others.
 
+Roadmap
+====
+
+1. Add PCA, T-SNE module
+2. Add supervised learning algorithm like SVM, decision tree, regression
+3. Interactive NN module
+
 Acknowledgments
 ===============
 
