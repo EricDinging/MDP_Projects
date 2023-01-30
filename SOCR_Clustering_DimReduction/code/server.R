@@ -92,7 +92,7 @@ server <- shinyServer(function(input, output, session){
                       label = paste("Select which columns to use:"),
                       choices = names(df()),selected=names(df())[length(names(df()))-1]
     )
-
+    
   })
   
   output$rawdata <- renderTable(df())
@@ -100,23 +100,23 @@ server <- shinyServer(function(input, output, session){
   data_Kmeans_result <- reactive({
     data_input <- df()
     if (input$kmeans_plot == "2D"){
-      if(ncol(data_input) < 2){
-        stop("Need at least two columns in dataset!")
-      }
-      if(input$inSelect_Kmeans == input$inSelect2_Kmeans){
-        stop("Choose different columns of dataset!")
-      }
+      validate(
+        need(ncol(data_input) >= 2, "Need at least two columns in dataset!")
+      )
+      validate(
+        need(input$inSelect_Kmeans != input$inSelect2_Kmeans, "Choose different columns of dataset!")
+      )
       data_input_plot_Kmeans <- data.frame(X1 = data_input[input$inSelect_Kmeans], X2 = data_input[input$inSelect2_Kmeans])
       colnames(data_input_plot_Kmeans) = c("X1", "X2")
       data_input_plot_Kmeans$group <- kkmeans(data.matrix(data_input_plot_Kmeans),centers=input$clustnum_kmeans)[1:nrow(data_input_plot_Kmeans)]
       return(data_input_plot_Kmeans)
     } else {
-      if(ncol(data_input) < 3){
-        stop("Need at least three columns in dataset!")
-      }
-      if(input$inSelect_Kmeans == input$inSelect2_Kmeans || input$inSelect2_Kmeans == input$inSelect3_Kmeans || input$inSelect_Kmeans == input$inSelect3_Kmeans){
-        stop("Choose different columns of dataset!")
-      }
+      validate(
+        need(ncol(data_input) >= 3, "Need at least three columns in dataset!")
+      )
+      validate(
+        need(input$inSelect_Kmeans != input$inSelect2_Kmeans && input$inSelect_Kmeans != input$inSelect3_Kmeans && input$inSelect2_Kmeans != input$inSelect3_Kmeans, "Choose different columns of dataset!")
+      )
       data_input_plot_3D_K <- data.frame(X1 = data_input[input$inSelect_Kmeans], X2 = data_input[input$inSelect2_Kmeans], X3 = data_input[input$inSelect3_Kmeans])
       colnames(data_input_plot_3D_K) = c("X1", "X2", "X3")
       data_input_plot_3D_K$group <- kkmeans(data.matrix(data_input_plot_3D_K),centers=input$clustnum_kmeans)[1:nrow(data_input_plot_3D_K)]
@@ -128,12 +128,12 @@ server <- shinyServer(function(input, output, session){
     data_input <- df()
     data_input <- data_input[complete.cases(data_input), ]
     if (input$GMM_plot == "2D"){
-      if(ncol(data_input) < 2){
-        stop("Need at least two columns in dataset!")
-      }
-      if(input$inSelect2 == input$inSelect){
-        stop("Choose different columns of dataset!")
-      }
+      validate(
+        need(ncol(data_input) >= 2, "Need at least two columns in dataset!")
+      )
+      validate(
+        need(input$inSelect != input$inSelect2, "Choose different columns of dataset!")
+      )
       data_input_plot <- data.frame(X1 = data_input[input$inSelect], X2 = data_input[input$inSelect2])
       colnames(data_input_plot) = c("X1", "X2")
       if(is.character(data_input_plot$X1) || is.character(data_input_plot$X2)){
@@ -144,17 +144,17 @@ server <- shinyServer(function(input, output, session){
       return(data_input_plot)
     } 
     else{
-      if(ncol(data_input) < 3){
-        stop("Need at least three columns in dataset!")
-      }
-      if(input$inSelect == input$inSelect2 || input$inSelect == input$inSelect3 || input$inSelect2 == input$inSelect3){
-        stop("Choose different columns of dataset!")
-      }
+      validate(
+        need(ncol(data_input) >= 3, "Need at least three columns in dataset!")
+      )
+      validate(
+        need(input$inSelect != input$inSelect2 && input$inSelect != input$inSelect3 && input$inSelect2 != input$inSelect3, "Choose different columns of dataset!")
+      )
       data_input_plot_3D <- data.frame(X1 = data_input[input$inSelect], X2 =  data_input[input$inSelect2], X3 = data_input[input$inSelect3])
       colnames(data_input_plot_3D) <- c("X1, X2, X3")
-      if(is.character(data_input_plot_3D$X1) || is.character(data_input_plot_3D$X2) || is.character(data_input_plot_3D$X3)){
-        stop("Gaussian Mixture currently does not support string input.")
-      }
+      validate(
+        need(!is.character(data_input_plot$X1) && !is.character(data_input_plot$X2), "Gaussian Mixture currently does not support string input.")
+      )
       gmm <- GMM(data_input_plot_3D,input$clustnum_GMM)
       data_input_plot_3D$group <- predict(gmm,data_input_plot_3D)
       return(data_input_plot_3D)
@@ -164,23 +164,23 @@ server <- shinyServer(function(input, output, session){
   data_Spectral_result <- reactive({
     data_input <-df()
     if (input$Spectral_plot == "2D"){
-      if(ncol(data_input) < 2){
-        stop("Need at least two columns in dataset!")
-      }
-      if(input$inSelect_Spectral == input$inSelect2_Spectral){
-        stop("Choose different columns of dataset!")
-      }
+      validate(
+        need(ncol(data_input) >= 2, "Need at least two columns in dataset!")
+      )
+      validate(
+        need(input$inSelect_Spectral != input$inSelect2_Spectral, "Choose different columns of dataset!")
+      )
       data_input_plot_Spectral <- data.frame(X1 = data_input[input$inSelect_Spectral], X2 = data_input[input$inSelect2_Spectral])
       colnames(data_input_plot_Spectral) <- c("X1", "X2")
       data_input_plot_Spectral$group <- specc(data.matrix(data_input_plot_Spectral),centers=input$clustnum_spec)
       return(data_input_plot_Spectral)
     }else{
-      if(ncol(data_input) < 3){
-        stop("Need at least three columns in dataset!")
-      }
-      if(input$inSelect_Spectral == input$inSelect2_Spectral || input$inSelect_Spectral == input$inSelect3_Spectral || input$inSelect2_Spectral == input$inSelect3_Spectral){
-        stop("Choose different columns of dataset!")
-      }
+      validate(
+        need(ncol(data_input) >= 3, "Need at least three columns in dataset!")
+      )
+      validate(
+        need(input$inSelect_Spectral != input$inSelect2_Spectral && input$inSelect_Spectral != input$inSelect3_Spectral && input$inSelect2_Spectral != input$inSelect3_Spectral, "Choose different columns of dataset!")
+      )
       data_input_plot_Spectral <- data.frame(X1 = data_input[input$inSelect_Spectral], X2 = data_input[input$inSelect2_Spectral], X3 = data_input[input$inSelect3_Spectral])
       colnames(data_input_plot_Spectral) <- c("X1", "X2", "X3")
       data_input_plot_Spectral$group <- specc(data.matrix(data_input_plot_Spec),centers=input$clustnum_spec)
@@ -191,23 +191,23 @@ server <- shinyServer(function(input, output, session){
   data_Cmeans_result <- reactive({
     data_input <-df()
     if (input$cmeans_plot == "2D"){
-      if(ncol(data_input) < 2){
-        stop("Need at least two columns in dataset!")
-      }
-      if(input$inSelect_Cmeans == input$inSelect2_Cmeans){
-        stop("Choose different columns of dataset!")
-      }
+      validate(
+        need(ncol(data_input) >= 2, "Need at least two columns in dataset!")
+      )
+      validate(
+        need(input$inSelect2_Cmeans != input$inSelect_Cmeans, "Choose different columns of dataset!")
+      )
       data_input_plot_Cmeans <- data.frame(X1 = data_input[input$inSelect_Cmeans], X2 = data_input[input$inSelect2_Cmeans])
       colnames(data_input_plot_Cmeans) <- c("X1", "X2")
       data_input_plot_Cmeans$group <- fcm(data.matrix(data_input_plot_Cmeans),centers=input$clustnum_cmeans)$cluster
       return(data_input_plot_Cmeans)
     }else{
-      if(ncol(data_input) < 3){
-        stop("Need at least three columns in dataset!")
-      }
-      if(input$inSelect_Cmeans == input$inSelect2_Cmeans || input$inSelect2_Cmeans == input$inSelect3_Cmeans || input$inSelect_Cmeans == input$inSelect3_Cmeans){
-        stop("Choose different columns of dataset!")
-      }
+      validate(
+        need(ncol(data_input) >= 3, "Need at least three columns in dataset!")
+      )
+      validate(
+        need(input$inSelect_Cmeans != input$inSelect2_Cmeans && input$inSelect_Cmeans != input$inSelect3_Cmeans && input$inSelect2_Cmeans != input$inSelect3_Cmeans, "Choose different columns of dataset!")
+      )
       data_input_plot_Cmeans <- data.frame(X1 = data_input[input$inSelect_Cmeans], X2 = data_input[input$inSelect2_Cmeans], X3 = data_input[input$inSelect3_Cmeans])
       colnames(data_input_plot_Cmeans) <- c("X1", "X2", "X3")
       data_input_plot_Cmeans$group <- fcm(data.matrix(data_input_plot_Cmeans),centers=input$clustnum_cmeans)$cluster
@@ -218,7 +218,7 @@ server <- shinyServer(function(input, output, session){
   output$kmeans_clusterchart <- plotly::renderPlotly({
     data_input_plot_Kmeans <- data_Kmeans_result()
     if (input$kmeans_plot == "2D"){
-      ggplot(data=data_input_plot_Kmeans, mapping=aes(x=data_input_plot_Kmeans$X1, y=data_input_plot_Kmeans$X2,color=as.factor(data_input_plot_Kmeans$group))) + geom_point(size=2) + labs(x="input data last column", y = "input data last but second column", colour = "Clusters")
+      plot_ly(x=data_input_plot_Kmeans$X1, y=data_input_plot_Kmeans$X2, z=data_input_plot_Kmeans$X3, type="scatter", marker=list(size = 12), mode="markers", color=as.factor(data_input_plot_Kmeans$group))
     }
     else{
       plot_ly(x=data_input_plot_Kmeans$X1, y=data_input_plot_Kmeans$X2, z=data_input_plot_Kmeans$X3, type="scatter3d", mode="markers", color=as.factor(data_input_plot_Kmeans$group))
@@ -229,17 +229,17 @@ server <- shinyServer(function(input, output, session){
   output$Gaussian_clusterchart <- plotly::renderPlotly({
     data_input_plot <- data_Guassian_result()
     if (input$GMM_plot == "2D"){
-      ggplot(data=data_input_plot, mapping=aes(x=data_input_plot$X1, y=data_input_plot$X2,color=as.factor(data_input_plot$group))) + geom_point(size=2) + labs(x="input data last column", y = "input data last but second column", colour = "Clusters")
+      plot_ly(x=data_input_plot$X1, y=data_input_plot$X2, z=data_input_plot$X3, type="scatter", marker=list(size = 12), mode="markers", color=as.factor(data_input_plot$group))
     } 
     else{
       plot_ly(x=data_input_plot$X1, y=data_input_plot$X2, z=data_input_plot$X3, type="scatter3d", mode="markers", color=as.factor(data_input_plot$group))
     }
-    })
+  })
   
   output$clusterchart_spectral <- plotly::renderPlotly({
     data_input_plot_Spectral <- data_Spectral_result()
     if (input$Spectral_plot == "2D"){
-      ggplot(data=data_input_plot_Spectral, mapping=aes(x=data_input_plot_Spectral$X1, y=data_input_plot_Spectral$X2,color=as.factor(data_input_plot_Spectral$group))) + geom_point(size=2) + labs(x="input data last column", y = "input data last but second column", colour = "Clusters")
+      plot_ly(x=data_input_plot_Spectral$X1, y=data_input_plot_Spectral$X2, z=data_input_plot_Spectral$X3, type="scatter", marker=list(size = 12), mode="markers", color=as.factor(data_input_plot_Spectral$group))
     }else{
       plot_ly(x=data_input_plot_Spectral$X1, y=data_input_plot_Spectral$X2, z=data_input_plot_Spectral$X3, type="scatter3d", mode="markers", color=as.factor(data_input_plot_Spectral$group))
     }
@@ -248,7 +248,7 @@ server <- shinyServer(function(input, output, session){
   output$clusterchart_cmeans <- plotly::renderPlotly({
     data_input_plot_Cmeans <- data_Cmeans_result()
     if (input$cmeans_plot == "2D"){
-      ggplot(data=data_input_plot_Cmeans, mapping=aes(x=data_input_plot_Cmeans$X1, y=data_input_plot_Cmeans$X2,color=as.factor(data_input_plot_Cmeans$group))) + geom_point(size=2) + labs(x="input data last column", y = "input data last but second column", colour = "Clusters")
+      plot_ly(x=data_input_plot_Cmeans$X1, y=data_input_plot_Cmeans$X2, z=data_input_plot_Cmeans$X3, type="scatter", marker=list(size = 12), mode="markers", color=as.factor(data_input_plot_Cmeans$group))
     }else{
       plot_ly(x=data_input_plot_Cmeans$X1, y=data_input_plot_Cmeans$X2, z=data_input_plot_Cmeans$X3, type="scatter3d", mode="markers", color=as.factor(data_input_plot_Cmeans$group))
     }
