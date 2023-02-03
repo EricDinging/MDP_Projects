@@ -256,13 +256,13 @@ server <- shinyServer(function(input, output, session){
   
   result <- reactive({
     data_input <- df()
-    if(ncol(data_input) < 2){
-      stop("Need at least two columns in dataset!")
-    }
+    validate(
+      need(ncol(data_input) >= 2, "Need at least two columns in dataset!")
+    )
     if(input$GMM_plot == "3D" || input$Spectral_plot == "3D" || input$cmeans_plot == "3D" || input$kmeans_plot == "3D"){
-      if(ncol(data_input) < 3){
-        stop("Need at least three columns in dataset!")
-      }
+      validate(
+        need(ncol(data_input) >= 3, "Need at least three columns in dataset!")
+      )
     }
     result_kmean <- data_Kmeans_result()$group
     result_GMM <- data_Guassian_result()$group
