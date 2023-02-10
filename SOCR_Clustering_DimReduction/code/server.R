@@ -136,9 +136,9 @@ server <- shinyServer(function(input, output, session){
       )
       data_input_plot <- data.frame(X1 = data_input[input$inSelect], X2 = data_input[input$inSelect2])
       colnames(data_input_plot) = c("X1", "X2")
-      if(is.character(data_input_plot$X1) || is.character(data_input_plot$X2)){
-        stop("Gaussian Mixture currently does not support string input.")
-      }
+      validate(
+        need(!is.character(data_input_plot$X1) && !is.character(data_input_plot$X2), "Gaussian Mixture currently does not support string input.")  
+      )
       gmm <- GMM(data_input_plot,input$clustnum_GMM)
       data_input_plot$group <- predict(gmm,data_input_plot)
       return(data_input_plot)
