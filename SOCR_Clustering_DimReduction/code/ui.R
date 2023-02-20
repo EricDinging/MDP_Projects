@@ -15,6 +15,7 @@ ui <- shinyUI(fluidPage(
         menuItem("Gaussian Mixture clustering",tabName= "Guassin_Mixture",icon=icon("users",lib="font-awesome")),
         menuItem("Spectral clustering",tabName= "Spectral",icon=icon("users",lib="font-awesome")),
         menuItem("Fuzzy C-Means", tabName= "cmeans",icon=icon("users",lib="font-awesome")),
+        menuItem("Decision Tree", tabName= "DT",icon=icon("users",lib="font-awesome")),
         menuItem("Clustered Results", tabName = "Cluster_Result",icon=icon("table")),
         menuItem("Help", tabName = "Help",icon=icon("cog"))
       )),
@@ -23,7 +24,7 @@ ui <- shinyUI(fluidPage(
         tabItem(tabName = "upload", h1("Upload your csv files"),fileInput("csv_file", "Choose CSV File:",
                                                                           multiple = FALSE,
                                                                           accept = c(".csv"))),
-        tabItem(tabName = "raw",h1("Raw Data"),fluidRow(column(5,tableOutput("rawdata")))),
+        tabItem(tabName = "raw",h1("Raw Data"), fluidRow(column(5,tableOutput("rawdata")))),
         tabItem(tabName = "kmeans",h1("K-means clustering"),
                 fluidRow(
                   box(selectInput("kmeans_plot", "Select Plot type:", choices=c("2D","3D")),width = 2),
@@ -60,6 +61,17 @@ ui <- shinyUI(fluidPage(
                   box(sliderInput("clustnum_cmeans","Number of clusters",2,8,6)),
                   box(width = 12,plotly::plotlyOutput("clusterchart_cmeans",width="100%",height = 750))
                 )),
+        tabItem(tabName = "DT", h1("Decision Tree supervised learning"),
+                fluidRow(
+                  box(selectInput("DT_plot", "Select Plot type:", choices=c("2D","3D")),width = 2),
+                  box(selectInput("inSelect_DT", "Select input", c("Item A", "Item B", "Item C")), width = 3),
+                  box(selectInput("inSelect2_DT", "Select input", c("Item A", "Item B", "Item C")), width = 3),
+                  box(selectInput("inSelect_label_DT", "Select input", c("Item A", "Item B", "Item C")), width = 3),
+                  conditionalPanel(condition = "input.DT_plot == '3D'", box(width = 3,selectInput("inSelect3_SVM", "Select input", c("Item A", "Item B", "Item C")))),
+                  box(sliderInput("test_ratio_DT","Train set ratio",min = 0, max = 40, post  = " %", value = 20)),
+                  box(width = 12,plotly::plotlyOutput("clusterchart_DT",width="100%",height = 750)),
+                  box(width = 12,plotly::plotlyOutput("clusterchart_DT_correct",width="100%",height = 750))
+                )),
         tabItem(tabName = "Cluster_Result", h1("Clustered Data Result"),
                 downloadButton('download',"Download the data"),
                 fluidRow(column(5,tableOutput("clustered_data")))),
@@ -77,5 +89,5 @@ ui <- shinyUI(fluidPage(
           includeHTML("SOCR_cluster_tracker_html")
         )))),)),
     
-    )) 
+  )) 
 )

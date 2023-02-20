@@ -7,16 +7,18 @@ library(kernlab)
 library(plotly)
 library(ppclust)
 source("ui.R")
-
+library(e1071)
+library(caTools)
+library(rpart)
+library(tree)
 options(shiny.maxRequestSize=50*1024^2)  # Limit file import to 50 MB
 
 server <- shinyServer(function(input, output, session){
   df <- reactive({
     if (is.null(input$csv_file))
-      return(read.csv("Mall_Customers.csv"))
+      return(read.csv("iris.csv"))
     data<-read.csv(input$csv_file$datapath)
     return(data)})
-  
   observe({
     # Can also set the label and select items
     if(ncol(df()) < 2){
@@ -56,6 +58,10 @@ server <- shinyServer(function(input, output, session){
                         label = paste("Select which columns to use:"),
                         choices = names(df()),selected=tail(names(df()),1)
       )
+      updateSelectInput(session, "inSelect3_DT",
+                        label = paste("Select which columns as feature:"),
+                        choices = names(df()),selected=names(df())[length(names(df()))-3]
+      )
     }
     updateSelectInput(session, "inSelect",
                       label = paste("Select which columns to use:"),
@@ -92,11 +98,21 @@ server <- shinyServer(function(input, output, session){
                       label = paste("Select which columns to use:"),
                       choices = names(df()),selected=names(df())[length(names(df()))-1]
     )
-    
+    updateSelectInput(session, "inSelect_DT",
+                      label = paste("Select which columns as feature:"),
+                      choices = names(df()),selected=names(df())[length(names(df()))-1]
+    )
+    updateSelectInput(session, "inSelect2_DT",
+                      label = paste("Select which columns as feature:"),
+                      choices = names(df()),selected=names(df())[length(names(df()))-2]
+    )
+    updateSelectInput(session, "inSelect_label_DT",
+                      label = paste("Select which columns as label:"),
+                      choices = names(df()),selected=tail(names(df()),1)
+    )
   })
   
   output$rawdata <- renderTable(df())
-  
   data_Kmeans_result <- reactive({
     data_input <- df()
     if (input$kmeans_plot == "2D"){
@@ -159,6 +175,57 @@ server <- shinyServer(function(input, output, session){
       data_input_plot_3D$group <- predict(gmm,data_input_plot_3D)
       return(data_input_plot_3D)
     }
+  })
+  training_test_index_DT <-reactive({
+    data_input <- df()
+    datasets <- data.frame(X1 = data_input[input$inSelect_DT], X2 =  data_input[input$inSelect2_DT], X3 = data_input[input$inSelect_label_DT])
+    colnames(datasets) <- c("X1", "X2", "X3")
+    split = sample.split(datasets$X3, SplitRatio = as.double(input$test_ratio_DT)/100)
+    return (split)
+  })
+  classifier_DT <- reactive({
+    data_input <- df()
+    datasets <- data.frame(X1 = data_input[input$inSelect_DT], X2 =  data_input[input$inSelect2_DT], X3 = data_input[input$inSelect_label_DT])
+    colnames(datasets) <- c("X1", "X2", "X3")
+    training_set = datasets[training_test_index_DT() == FALSE,]
+    test_set = datasets[training_test_index_DT() == TRUE,]
+    tree = rpart(training_set$X3 ~., data = training_set)
+    return (tree)
+  })
+  predicted_result_DT <- reactive({
+    data_input <- df()
+    datasets <- data.frame(X1 = data_input[input$inSelect_DT], X2 =  data_input[input$inSelect2_DT], X3 = data_input[input$inSelect_label_DT])
+    colnames(datasets) <- c("X1", "X2", "X3")
+    test_set = datasets[training_test_index_DT() == TRUE,]
+    result = predict(classifier_DT(), test_set, type = 'class')
+    return (result)
+  })
+  output$clusterchart_DT<- plotly::renderPlotly({
+    data_input <- df()
+    datasets <- data.frame(X1 = data_input[input$inSelect_DT], X2 =  data_input[input$inSelect2_DT], X3 = data_input[input$inSelect_label_DT])
+    colnames(datasets) <- c("X1", "X2", "X3")
+    result = predicted_result_DT()
+    index = as.integer(names(result))
+    correct = datasets[training_test_index_DT() == TRUE,]
+    accuracy = 0
+    labels = c()
+    for (i in 1:length(result)) {
+      if (toString(result[i]) == toString(correct$X3[i])) {
+          accuracy = accuracy + 1
+      }
+      labels <- append(labels, toString(result[i]))
+    } 
+    accuracy = toString(accuracy/length(correct$X3) * 100)
+    fig1 <-  plot_ly(x=datasets[index,]$X1, y=datasets[index,]$X2, type="scatter", marker=list(size = 12), mode="markers", color=as.factor(labels))%>%
+      layout(title = paste('Accuracy: ', accuracy, "%",sep=""))
+  })
+  output$clusterchart_DT_correct <- plotly::renderPlotly({
+    data_input <- df()
+    datasets <- data.frame(X1 = data_input[input$inSelect_DT], X2 =  data_input[input$inSelect2_DT], X3 = data_input[input$inSelect_label_DT])
+    colnames(datasets) <- c("X1", "X2", "X3")
+    correct = datasets[training_test_index_DT() == TRUE,]
+    fig1 <-  plot_ly(x=correct$X1, y=correct$X2, type="scatter", marker=list(size = 12), mode="markers", color=as.factor(correct$X3))%>%
+      layout(title = "Actual test set")
   })
   
   data_Spectral_result <- reactive({
