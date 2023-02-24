@@ -66,8 +66,8 @@ ui <- shinyUI(fluidPage(
                   box(selectInput("DT_plot", "Select Plot type:", choices=c("2D","3D")),width = 2),
                   box(selectInput("inSelect_DT", "Select input", c("Item A", "Item B", "Item C")), width = 3),
                   box(selectInput("inSelect2_DT", "Select input", c("Item A", "Item B", "Item C")), width = 3),
+                  conditionalPanel(condition = "input.DT_plot == '3D'", box(width = 3,selectInput("inSelect3_DT","Select input",c("Item A", "Item B", "Item C")))),
                   box(selectInput("inSelect_label_DT", "Select input", c("Item A", "Item B", "Item C")), width = 3),
-                  conditionalPanel(condition = "input.DT_plot == '3D'", box(width = 3,selectInput("inSelect3_SVM", "Select input", c("Item A", "Item B", "Item C")))),
                   box(sliderInput("test_ratio_DT","Train set ratio",min = 0, max = 40, post  = " %", value = 20)),
                 ),
                 fluidRow((

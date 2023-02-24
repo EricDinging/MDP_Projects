@@ -41,26 +41,9 @@ server <- shinyServer(function(input, output, session){
                         label = paste("Select which columns to use:"),
                         choices = names(df()),selected=names(df())[length(names(df()))-2]
       )
-    } else{
-      updateSelectInput(session, "inSelect3",
-                        label = paste("Select which columns to use:"),
-                        choices = names(df()),selected=tail(names(df()),1)
-      )
-      updateSelectInput(session, "inSelect3_Spectral",
-                        label = paste("Select which columns to use:"),
-                        choices = names(df()),selected=tail(names(df()),1)
-      )
-      updateSelectInput(session, "inSelect3_Kmeans",
-                        label = paste("Select which columns to use:"),
-                        choices = names(df()),selected=tail(names(df()),1)
-      )
-      updateSelectInput(session, "inSelect3_Cmeans",
-                        label = paste("Select which columns to use:"),
-                        choices = names(df()),selected=tail(names(df()),1)
-      )
       updateSelectInput(session, "inSelect3_DT",
                         label = paste("Select which columns as feature:"),
-                        choices = names(df()),selected=names(df())[length(names(df()))-3]
+                        choices = names(df()),selected=names(df())[length(names(df()))-2]
       )
     }
     updateSelectInput(session, "inSelect",
@@ -152,6 +135,7 @@ server <- shinyServer(function(input, output, session){
       )
       data_input_plot <- data.frame(X1 = data_input[input$inSelect], X2 = data_input[input$inSelect2])
       colnames(data_input_plot) = c("X1", "X2")
+
       validate(
         need(!is.character(data_input_plot$X1) && !is.character(data_input_plot$X2), "Gaussian Mixture currently does not support string input.")  
       )
@@ -160,72 +144,24 @@ server <- shinyServer(function(input, output, session){
       return(data_input_plot)
     } 
     else{
+      
       validate(
         need(ncol(data_input) >= 3, "Need at least three columns in dataset!")
       )
+
       validate(
         need(input$inSelect != input$inSelect2 && input$inSelect != input$inSelect3 && input$inSelect2 != input$inSelect3, "Choose different columns of dataset!")
       )
-      data_input_plot_3D <- data.frame(X1 = data_input[input$inSelect], X2 =  data_input[input$inSelect2], X3 = data_input[input$inSelect3])
-      colnames(data_input_plot_3D) <- c("X1, X2, X3")
+      
+      data_input_plot <- data.frame(X1 = data_input[input$inSelect], X2 =  data_input[input$inSelect2], X3 = data_input[input$inSelect3])
+      colnames(data_input_plot) <- c("X1, X2, X3")
       validate(
-        need(!is.character(data_input_plot$X1) && !is.character(data_input_plot$X2), "Gaussian Mixture currently does not support string input.")
+        need(!is.character(data_input_plot$X1) && !is.character(data_input_plot$X2)&& !is.character(data_input_plot$X3), "Gaussian Mixture currently does not support string input.")  
       )
-      gmm <- GMM(data_input_plot_3D,input$clustnum_GMM)
-      data_input_plot_3D$group <- predict(gmm,data_input_plot_3D)
-      return(data_input_plot_3D)
+      gmm <- GMM(data_input_plot,input$clustnum_GMM)
+      data_input_plot$group <- predict(gmm,data_input_plot)
+      return(data_input_plot)
     }
-  })
-  training_test_index_DT <-reactive({
-    data_input <- df()
-    datasets <- data.frame(X1 = data_input[input$inSelect_DT], X2 =  data_input[input$inSelect2_DT], X3 = data_input[input$inSelect_label_DT])
-    colnames(datasets) <- c("X1", "X2", "X3")
-    split = sample.split(datasets$X3, SplitRatio = as.double(input$test_ratio_DT)/100)
-    return (split)
-  })
-  classifier_DT <- reactive({
-    data_input <- df()
-    datasets <- data.frame(X1 = data_input[input$inSelect_DT], X2 =  data_input[input$inSelect2_DT], X3 = data_input[input$inSelect_label_DT])
-    colnames(datasets) <- c("X1", "X2", "X3")
-    training_set = datasets[training_test_index_DT() == FALSE,]
-    test_set = datasets[training_test_index_DT() == TRUE,]
-    tree = rpart(training_set$X3 ~., data = training_set)
-    return (tree)
-  })
-  predicted_result_DT <- reactive({
-    data_input <- df()
-    datasets <- data.frame(X1 = data_input[input$inSelect_DT], X2 =  data_input[input$inSelect2_DT], X3 = data_input[input$inSelect_label_DT])
-    colnames(datasets) <- c("X1", "X2", "X3")
-    test_set = datasets[training_test_index_DT() == TRUE,]
-    result = predict(classifier_DT(), test_set, type = 'class')
-    return (result)
-  })
-  output$clusterchart_DT<- plotly::renderPlotly({
-    data_input <- df()
-    datasets <- data.frame(X1 = data_input[input$inSelect_DT], X2 =  data_input[input$inSelect2_DT], X3 = data_input[input$inSelect_label_DT])
-    colnames(datasets) <- c("X1", "X2", "X3")
-    result = predicted_result_DT()
-    index = as.integer(names(result))
-    correct = datasets[training_test_index_DT() == TRUE,]
-    accuracy = 0
-    labels = c()
-    for (i in 1:length(result)) {
-      if (toString(result[i]) == toString(correct$X3[i])) {
-          accuracy = accuracy + 1
-      }
-      labels <- append(labels, toString(result[i]))
-    } 
-    accuracy = toString(accuracy/length(correct$X3) * 100)
-    fig1 <-  plot_ly(x=datasets[index,]$X1, y=datasets[index,]$X2, type="scatter", marker=list(size = 12), mode="markers", color=as.factor(labels))%>%
-      layout(title = paste('Accuracy: ', accuracy, "%",sep=""))
-  })
-  output$clusterchart_DT_correct <- plotly::renderPlotly({
-    data_input <- df()
-    datasets <- data.frame(X1 = data_input[input$inSelect_DT], X2 =  data_input[input$inSelect2_DT], X3 = data_input[input$inSelect_label_DT])
-    colnames(datasets) <- c("X1", "X2", "X3")
-    correct = datasets[training_test_index_DT() == TRUE,]
-    fig1 <-  plot_ly(x=correct$X1, y=correct$X2, type="scatter", marker=list(size = 12), mode="markers", color=as.factor(correct$X3))%>%
-      layout(title = "Actual test set")
   })
   
   data_Spectral_result <- reactive({
@@ -248,9 +184,10 @@ server <- shinyServer(function(input, output, session){
       validate(
         need(input$inSelect_Spectral != input$inSelect2_Spectral && input$inSelect_Spectral != input$inSelect3_Spectral && input$inSelect2_Spectral != input$inSelect3_Spectral, "Choose different columns of dataset!")
       )
+      
       data_input_plot_Spectral <- data.frame(X1 = data_input[input$inSelect_Spectral], X2 = data_input[input$inSelect2_Spectral], X3 = data_input[input$inSelect3_Spectral])
       colnames(data_input_plot_Spectral) <- c("X1", "X2", "X3")
-      data_input_plot_Spectral$group <- specc(data.matrix(data_input_plot_Spec),centers=input$clustnum_spec)
+      data_input_plot_Spectral$group <- specc(data.matrix(data_input_plot_Spectral),centers=input$clustnum_spec)
       return(data_input_plot_Spectral)
     }
   })
@@ -296,9 +233,10 @@ server <- shinyServer(function(input, output, session){
   output$Gaussian_clusterchart <- plotly::renderPlotly({
     data_input_plot <- data_Guassian_result()
     if (input$GMM_plot == "2D"){
-      plot_ly(x=data_input_plot$X1, y=data_input_plot$X2, z=data_input_plot$X3, type="scatter", marker=list(size = 12), mode="markers", color=as.factor(data_input_plot$group))
+      plot_ly(x=data_input_plot$X1, y=data_input_plot$X2, type="scatter", marker=list(size = 12), mode="markers", color=as.factor(data_input_plot$group))
     } 
     else{
+      colnames(data_input_plot) <- c("X1", "X2", "X3","group")
       plot_ly(x=data_input_plot$X1, y=data_input_plot$X2, z=data_input_plot$X3, type="scatter3d", mode="markers", color=as.factor(data_input_plot$group))
     }
   })
@@ -319,6 +257,137 @@ server <- shinyServer(function(input, output, session){
     }else{
       plot_ly(x=data_input_plot_Cmeans$X1, y=data_input_plot_Cmeans$X2, z=data_input_plot_Cmeans$X3, type="scatter3d", mode="markers", color=as.factor(data_input_plot_Cmeans$group))
     }
+  })
+  training_test_index_DT <-reactive({
+    data_input <- df()
+    if(input$DT_plot == "2D") {
+      datasets <- data.frame(X1 = data_input[input$inSelect_DT],
+                             X2 =  data_input[input$inSelect2_DT],
+                             X3 = data_input[input$inSelect_label_DT])
+      colnames(datasets) <- c("X1", "X2", "X3")
+      split = sample.split(datasets$X3, SplitRatio = as.double(input$test_ratio_DT)/100)
+      return (split)
+    }
+    else{
+      datasets <- data.frame(X1 = data_input[input$inSelect_DT],
+                             X2 =  data_input[input$inSelect2_DT],
+                             X3 = data_input[input$inSelect3_DT],
+                             X4 = data_input[input$inSelect_label_DT])
+      colnames(datasets) <- c("X1", "X2", "X3", "X4")
+      split = sample.split(datasets$X4, SplitRatio = as.double(input$test_ratio_DT)/100)
+      return (split)
+    }
+    
+  })
+  classifier_DT <- reactive({
+    data_input <- df()
+    if(input$DT_plot == "2D"){
+      datasets <- data.frame(X1 = data_input[input$inSelect_DT], X2 =  data_input[input$inSelect2_DT], X3 = data_input[input$inSelect_label_DT])
+      colnames(datasets) <- c("X1", "X2", "X3")
+      training_set = datasets[training_test_index_DT() == FALSE,]
+      test_set = datasets[training_test_index_DT() == TRUE,]
+      tree = rpart(training_set$X3 ~., data = training_set)
+      return (tree)
+      
+    }
+    else{
+      datasets <- data.frame(X1 = data_input[input$inSelect_DT], X2 =  data_input[input$inSelect2_DT],
+                             X3 = data_input[input$inSelect3_DT],X4 = data_input[input$inSelect_label_DT])
+      colnames(datasets) <- c("X1", "X2", "X3", "X4")
+      training_set = datasets[training_test_index_DT() == FALSE,]
+      test_set = datasets[training_test_index_DT() == TRUE,]
+      tree = rpart(training_set$X4 ~., data = training_set)
+      return (tree)
+    }
+  })
+  predicted_result_DT <- reactive({
+    data_input <- df()
+    if(input$DT_plot == "2D") {
+      datasets <- data.frame(X1 = data_input[input$inSelect_DT], X2 =  data_input[input$inSelect2_DT], X3 = data_input[input$inSelect_label_DT])
+      colnames(datasets) <- c("X1", "X2", "X3")
+      test_set = datasets[training_test_index_DT() == TRUE,]
+      result = predict(classifier_DT(), test_set, type = 'class')
+      return (result)
+    }
+    else{
+      datasets <- data.frame(X1 = data_input[input$inSelect_DT], X2 =  data_input[input$inSelect2_DT],
+                             x3 = data_input[input$inSelect3_DT],
+                             X4 = data_input[input$inSelect_label_DT])
+      colnames(datasets) <- c("X1", "X2", "X3", "X4")
+      test_set = datasets[training_test_index_DT() == TRUE,]
+      result = predict(classifier_DT(), test_set, type = 'class')
+      return (result)
+    }
+  })
+  output$clusterchart_DT<- plotly::renderPlotly({
+    data_input <- df()
+    if(input$DT_plot == "2D") {
+      datasets <- data.frame(X1 = data_input[input$inSelect_DT],
+                             X2 =  data_input[input$inSelect2_DT],
+                             X3 = data_input[input$inSelect_label_DT])
+      colnames(datasets) <- c("X1", "X2", "X3")
+      result = predicted_result_DT()
+      index = as.integer(names(result))
+      correct = datasets[training_test_index_DT() == TRUE,]
+      accuracy = 0
+      labels = c()
+      for (i in 1:length(result)) {
+        if (toString(result[i]) == toString(correct$X3[i])) {
+          accuracy = accuracy + 1
+        }
+        labels <- append(labels, toString(result[i]))
+      } 
+      accuracy = toString(accuracy/length(correct$X3) * 100)
+      fig1 <-  plot_ly(x=datasets[index,]$X1, y=datasets[index,]$X2, type="scatter", marker=list(size = 12), mode="markers", color=as.factor(labels))%>%
+        layout(title = paste('Accuracy: ', accuracy, "%",sep=""))
+    }
+    else {
+      datasets <- data.frame(X1 = data_input[input$inSelect_DT],
+                             X2 =  data_input[input$inSelect2_DT],
+                             X3 = data_input[input$inSelect3_DT],
+                             X4 = data_input[input$inSelect_label_DT])
+      colnames(datasets) <- c("X1", "X2", "X3", "X4")
+      result = predicted_result_DT()
+      index = as.integer(names(result))
+      correct = datasets[training_test_index_DT() == TRUE,]
+      accuracy = 0
+      labels = c()
+      for (i in 1:length(result)) {
+        if (toString(result[i]) == toString(correct$X4[i])) {
+          accuracy = accuracy + 1
+        }
+        labels <- append(labels, toString(result[i]))
+      }
+      accuracy = toString(accuracy/length(correct$X4) * 100)
+      fig1 <-  plot_ly(x=datasets[index,]$X1, y=datasets[index,]$X2,
+                       z = datasets[index,]$X3,
+                       type="scatter3d", marker=list(size = 12),
+                       mode="markers", color=as.factor(labels))%>%
+        layout(title = paste('Accuracy: ', accuracy, "%",sep=""))
+    }
+    
+  })
+  output$clusterchart_DT_correct <- plotly::renderPlotly({
+    data_input <- df()
+    if(input$DT_plot == "2D") {
+      datasets <- data.frame(X1 = data_input[input$inSelect_DT], X2 =  data_input[input$inSelect2_DT], X3 = data_input[input$inSelect_label_DT])
+      colnames(datasets) <- c("X1", "X2", "X3")
+      correct = datasets[training_test_index_DT() == TRUE,]
+      fig1 <-  plot_ly(x=correct$X1, y=correct$X2, type="scatter", marker=list(size = 12), mode="markers", color=as.factor(correct$X3))%>%
+        layout(title = "Actual test set")
+    }
+    else{
+      datasets <- data.frame(X1 = data_input[input$inSelect_DT],
+                             X2 =  data_input[input$inSelect2_DT],
+                             X3 = data_input[input$inSelect3_DT],
+                             X4 = data_input[input$inSelect_label_DT])
+      colnames(datasets) <- c("X1", "X2", "X3","X4")
+      correct = datasets[training_test_index_DT() == TRUE,]
+      fig1 <-  plot_ly(x=correct$X1, y=correct$X2, z = correct$X3,
+                       type="scatter3d", marker=list(size = 12), mode="markers", color=as.factor(correct$X4))%>%
+        layout(title = "Actual test set")
+    }
+    
   })
   
   result <- reactive({
