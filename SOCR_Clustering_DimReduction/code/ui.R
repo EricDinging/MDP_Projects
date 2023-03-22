@@ -69,10 +69,18 @@ ui <- shinyUI(fluidPage(
                   conditionalPanel(condition = "input.DT_plot == '3D'", box(width = 3,selectInput("inSelect3_DT","Select input",c("Item A", "Item B", "Item C")))),
                   box(selectInput("inSelect_label_DT", "Select input", c("Item A", "Item B", "Item C")), width = 3),
                   box(sliderInput("test_ratio_DT","Train set ratio",min = 0, max = 40, post  = " %", value = 20)),
-                ),
+                  ),
                 fluidRow((
                   splitLayout(cellWidths = c("50%", "50%"), plotly::plotlyOutput("clusterchart_DT",width="100%",height = 750), plotly::plotlyOutput("clusterchart_DT_correct",width="100%",height = 750))
-                ))),
+                )),
+                fluidRow(
+                  box(fileInput("test_file", "Upload test set:",
+                                multiple = FALSE,
+                                accept = c(".csv")), width = 3),
+                  box(width = 12,plotly::plotlyOutput("test_plot_DT",width="100%",height = 750)),
+                  box(downloadButton('download_result',"Download the prediction result"),width = 2)
+                )
+                ),
         tabItem(tabName = "Cluster_Result", h1("Clustered Data Result"),
                 downloadButton('download',"Download the data"),
                 fluidRow(column(5,tableOutput("clustered_data")))),
@@ -84,11 +92,7 @@ ui <- shinyUI(fluidPage(
                             style = "fontweight:600"), target = "_blank",
                          href = paste0("https://www.socr.umich.edu/people", "/")),
                 style="font-size:20px;color:blue;")
-      ),
-      tags$footer(
-        div(shinyUI(bootstrapPage(div(
-          includeHTML("SOCR_cluster_tracker_html")
-        )))),)),
+      )),
     
   )) 
 )

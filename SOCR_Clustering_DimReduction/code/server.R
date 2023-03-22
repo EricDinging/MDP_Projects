@@ -19,6 +19,11 @@ server <- shinyServer(function(input, output, session){
       return(read.csv("iris.csv"))
     data<-read.csv(input$csv_file$datapath)
     return(data)})
+  test_set <- reactive({
+    if (is.null(input$test_file))
+      return(read.csv("iris.csv"))
+    data<-read.csv(input$test_file$datapath)
+    return(data)})
   observe({
     # Can also set the label and select items
     if(ncol(df()) < 2){
@@ -365,7 +370,6 @@ server <- shinyServer(function(input, output, session){
                        mode="markers", color=as.factor(labels))%>%
         layout(title = paste('Accuracy: ', accuracy, "%",sep=""))
     }
-    
   })
   output$clusterchart_DT_correct <- plotly::renderPlotly({
     data_input <- df()
@@ -387,9 +391,87 @@ server <- shinyServer(function(input, output, session){
                        type="scatter3d", marker=list(size = 12), mode="markers", color=as.factor(correct$X4))%>%
         layout(title = "Actual test set")
     }
-    
-  })
   
+  })
+  predict_result <- reactive({
+    data_input <- df()
+    test_file <- test_set()
+    if(input$DT_plot == "2D") {
+      datasets <- data.frame(X1 = data_input[input$inSelect_DT],
+                             X2 =  data_input[input$inSelect2_DT],
+                             X3 = data_input[input$inSelect_label_DT])
+      test_set = data.frame(X1 = test_file[input$inSelect_DT],
+                            X2 =  test_file[input$inSelect2_DT])
+      colnames(datasets) <- c("X1", "X2", "X3")
+      colnames(test_set) <- c("X1", "X2")
+      tree = rpart(datasets$X3 ~., data = datasets)
+      result = predict(tree, test_set, type = 'class')
+      labels = c()
+      for (i in 1:length(result)) {
+        labels <- append(labels, toString(result[i]))
+      }
+      test_file$DT_result <- labels
+      return(test_file)
+    } else{
+      datasets <- data.frame(X1 = data_input[input$inSelect_DT],
+                             X2 =  data_input[input$inSelect2_DT],
+                             X3 = data_input[input$inSelect3_DT],
+                             X4 = data_input[input$inSelect_label_DT])
+      test_set = data.frame(X1 = test_file[input$inSelect_DT],
+                            X2 =  test_file[input$inSelect2_DT],
+                            X3 = data_input[input$inSelect3_DT])
+      colnames(datasets) <- c("X1", "X2", "X3", "X4")
+      colnames(test_set) <- c("X1", "X2", "X3")
+      tree = rpart(datasets$X4 ~., data = datasets)
+      result = predict(tree, test_set, type = 'class')
+      labels = c()
+      for (i in 1:length(result)) {
+        labels <- append(labels, toString(result[i]))
+      }
+      test_file$DT_result <- labels
+      return(test_file)
+    }
+    })
+  output$test_plot_DT <- plotly::renderPlotly({
+    test_file <- test_set()
+    data_input <- df()
+    if(input$DT_plot == "2D") {
+      datasets <- data.frame(X1 = data_input[input$inSelect_DT],
+                             X2 =  data_input[input$inSelect2_DT],
+                             X3 = data_input[input$inSelect_label_DT])
+      test_set = data.frame(X1 = test_file[input$inSelect_DT],
+                            X2 =  test_file[input$inSelect2_DT])
+      colnames(datasets) <- c("X1", "X2", "X3")
+      colnames(test_set) <- c("X1", "X2")
+      tree = rpart(datasets$X3 ~., data = datasets)
+      result = predict(tree, test_set, type = 'class')
+      labels = c()
+      for (i in 1:length(result)) {
+        labels <- append(labels, toString(result[i]))
+      }
+      fig1 <-  plot_ly(x=test_set$X1, y=test_set$X2, type="scatter", marker=list(size = 12), mode="markers", color=as.factor(labels))%>%
+        layout(title = "test set result")
+    } else{
+      datasets <- data.frame(X1 = data_input[input$inSelect_DT],
+                             X2 =  data_input[input$inSelect2_DT],
+                             X3 = data_input[input$inSelect3_DT],
+                             X4 = data_input[input$inSelect_label_DT])
+      test_set = data.frame(X1 = test_file[input$inSelect_DT],
+                            X2 =  test_file[input$inSelect2_DT],
+                            X3 = data_input[input$inSelect3_DT])
+      colnames(datasets) <- c("X1", "X2", "X3", "X4")
+      colnames(test_set) <- c("X1", "X2", "X3")
+      tree = rpart(datasets$X4 ~., data = datasets)
+      result = predict(tree, test_set, type = 'class')
+      labels = c()
+      for (i in 1:length(result)) {
+        labels <- append(labels, toString(result[i]))
+      }
+      fig1 <-  plot_ly(x=test_set$X1, y=test_set$X2, z = test_set$X3,
+                       type="scatter3d", marker=list(size = 12), mode="markers", color=as.factor(labels))%>%
+        layout(title = "test set result")
+    }
+  })
   result <- reactive({
     data_input <- df()
     validate(
@@ -411,7 +493,12 @@ server <- shinyServer(function(input, output, session){
     return(data_input)
   })
   output$clustered_data <- renderTable(result())
-  
+  output$download_result <- downloadHandler(
+    filename = "prediction_result.csv",
+    content = function(fname){
+      write.csv(predict_result(),fname)
+    }
+  )
   output$download <- downloadHandler(
     filename = "processed.csv",
     content = function(fname){
